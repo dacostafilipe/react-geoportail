@@ -1,5 +1,5 @@
 {
-  "name": "@react-geoportail/sdk",
+  "name": "react-geoportail",
   "version": "0.1.0",
   "description": "React SDK for the Geoportail Luxembourg v3 API",
   "type": "module",
@@ -13,7 +13,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
@@ -32,6 +34,22 @@
     "vite": "^5.0.0",
     "vite-plugin-dts": "^3.6.0"
   },
-  "keywords": ["geoportail", "luxembourg", "map", "react", "openlayers", "geocode"],
-  "license": "MIT"
+  "keywords": [
+    "geoportail",
+    "luxembourg",
+    "map",
+    "react",
+    "openlayers",
+    "geocode"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dacostafilipe/react-geoportail.git"
+  },
+  "author": "Filipe DA COSTA",
+  "bugs": {
+    "url": "https://github.com/dacostafilipe/react-geoportail/issues"
+  },
+  "homepage": "https://github.com/dacostafilipe/react-geoportail#readme"
 }
