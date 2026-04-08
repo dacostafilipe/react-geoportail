@@ -21,7 +21,7 @@ An unofficial React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geo
 ## Installation
 
 ```bash
-npm install @react-geoportail/sdk
+npm install @dacostafilipe/react-geoportail
 ```
 
 The Geoportail API script (`apiv3.geoportail.lu/apiv3loader.js`) is injected automatically — no manual `<script>` tag needed.
@@ -29,7 +29,7 @@ The Geoportail API script (`apiv3.geoportail.lu/apiv3loader.js`) is injected aut
 ## Quick start
 
 ```tsx
-import { GeoportailMap } from '@react-geoportail/sdk';
+import { GeoportailMap } from '@dacostafilipe/react-geoportail';
 
 export default function App() {
   return (
@@ -89,7 +89,7 @@ Pass a `ref` typed as `GeoportailMapHandle` to control the map programmatically:
 
 ```tsx
 import { useRef } from 'react';
-import { GeoportailMap, GeoportailMapHandle } from '@react-geoportail/sdk';
+import { GeoportailMap, GeoportailMapHandle } from '@dacostafilipe/react-geoportail';
 
 const mapRef = useRef<GeoportailMapHandle>(null);
 
@@ -112,7 +112,7 @@ const luxMap = mapRef.current?.getLuxMap();
 Convert a WGS84 lat/lon position to a Luxembourg address. Uses the Geoportail REST reverse geocode endpoint — no API key required.
 
 ```tsx
-import { useReverseGeocode } from '@react-geoportail/sdk';
+import { useReverseGeocode } from '@dacostafilipe/react-geoportail';
 
 function LocationInfo({ lat, lon }: { lat: number; lon: number }) {
   const { state, lookup } = useReverseGeocode();
@@ -160,7 +160,7 @@ interface Address {
 Search for a Luxembourg address and get back coordinates. Supports a free-text query string or structured fields.
 
 ```tsx
-import { useGeocode } from '@react-geoportail/sdk';
+import { useGeocode } from '@dacostafilipe/react-geoportail';
 
 function AddressSearch() {
   const { state, search } = useGeocode();
@@ -228,7 +228,7 @@ interface GeocodeResultItem {
 The SDK exposes the internal coordinate conversion functions if you need them directly.
 
 ```ts
-import { latLonToLuref, lurefToLatLon } from '@react-geoportail/sdk';
+import { latLonToLuref, lurefToLatLon } from '@dacostafilipe/react-geoportail';
 
 // WGS84 → EPSG:2169 (Luxembourg TM)
 const { easting, northing } = latLonToLuref(49.6116, 6.1319);

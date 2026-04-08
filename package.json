@@ -1,6 +1,6 @@
 {
-  "name": "react-geoportail",
-  "version": "0.1.0",
+  "name": "@dacostafilipe/react-geoportail",
+  "version": "0.1.1",
   "description": "React SDK for the Geoportail Luxembourg v3 API",
   "type": "module",
   "main": "./dist/react-geoportail.umd.cjs",
