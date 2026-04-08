@@ -22,7 +22,6 @@ const F = 1 / 297.0;    // Flattening
 const B = A * (1 - F);  // Semi-minor axis
 
 const E2 = 1 - (B * B) / (A * A); // First eccentricity squared
-const E = Math.sqrt(E2);
 
 // Helmert 7-parameter shift: ETRS89 -> ED50 (approximate for Luxembourg)
 // These values transform WGS84 (≈ETRS89) to ED50 used by LUREF
