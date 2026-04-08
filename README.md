@@ -1,6 +1,8 @@
 # react-geoportail
 
-A React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/). Provides a map component and hooks for geocoding, all typed with TypeScript.
+> **Disclaimer:** This is an **unofficial, community-built** React package. It is not affiliated with, endorsed by, or supported by the [Geoportail Luxembourg](https://www.geoportail.lu) team or the Administration du Cadastre et de la Topographie (ACT). For the official API, see [apiv3.geoportail.lu](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/).
+
+An unofficial React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/). Provides a map component and hooks for geocoding, all typed with TypeScript.
 
 ## Features
 
