@@ -3,7 +3,7 @@
  * the global `lux` namespace is available.
  */
 
-const LUX_SCRIPT_URL = '//apiv3.geoportail.lu/apiv3loader.js';
+const LUX_SCRIPT_URL = 'https://apiv3.geoportail.lu/apiv3loader.js';
 const LUX_SCRIPT_ID = 'geoportail-apiv3-loader';
 
 let loadPromise: Promise<void> | null = null;

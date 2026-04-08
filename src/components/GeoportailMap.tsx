@@ -174,7 +174,8 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
       markerMode,
       markerPosition?.lat,
       markerPosition?.lon,
-      center,
+      center.lat,
+      center.lon,
     ]);
 
     // ------------------------------------------------------------------ imperative handle

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { latLonToLuref } from '../utils/coordinates.ts';
 import type { LatLon, Address } from '../types/index.ts';
 
@@ -29,6 +29,8 @@ export function useReverseGeocode() {
   });
 
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const lookup = useCallback(async (position: LatLon) => {
     // Cancel any in-flight request

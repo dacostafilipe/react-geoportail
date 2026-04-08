@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { lurefToLatLon } from '../utils/coordinates.ts';
 import type { GeocodeQuery, LatLon } from '../types/index.ts';
 
@@ -39,6 +39,8 @@ export function useGeocode() {
   });
 
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const search = useCallback(async (query: GeocodeQuery) => {
     abortRef.current?.abort();
