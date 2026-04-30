@@ -1,7 +1,6 @@
 import React, {
   useEffect,
   useRef,
-  useId,
   forwardRef,
   useImperativeHandle,
 } from 'react';
@@ -91,11 +90,8 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
     },
     ref
   ) {
-    const generatedId = useId();
-    // useId produces ":r0:" style strings — strip colons for valid DOM id
-    const mapId = `gp-map-${generatedId.replace(/:/g, '')}`;
-
     const luxApi = useLuxApi();
+    const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<LuxMapInstance | null>(null);
     const markerLayerRef = useRef<unknown>(null);
     const clickListenerRef = useRef<((...args: unknown[]) => void) | null>(null);
@@ -107,12 +103,13 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
     // ------------------------------------------------------------------ map init
     useEffect(() => {
       if (luxApi.status !== 'ready') return;
+      if (!mapContainerRef.current) return;
 
       const lux = luxApi.lux;
       const { easting, northing } = latLonToLuref(center.lat, center.lon);
 
       const mapInstance = new lux.Map({
-        target: mapId,
+        target: mapContainerRef.current,
         bgLayer,
         zoom,
         position: [easting, northing],
@@ -129,9 +126,8 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
         markerLayerRef.current = null;
         clickListenerRef.current = null;
       };
-      // Only re-run when the API becomes ready or the map target changes.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [luxApi.status, mapId]);
+    }, [luxApi.status]);
 
     // ------------------------------------------------------------------ marker
     useEffect(() => {
@@ -224,7 +220,7 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
           </div>
         )}
         <div
-          id={mapId}
+          ref={mapContainerRef}
           style={{ width: '100%', height: '100%' }}
         />
       </div>
