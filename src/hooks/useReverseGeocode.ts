@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { latLonToLuref } from '../utils/coordinates';
 import type { LatLon, Address } from '../types';
 
-const REVERSE_GEOCODE_URL = 'https://api.geoportail.lu/geocoder/reverseGeocode';
+const REVERSE_GEOCODE_URL = 'https://apiv3.geoportail.lu/geocode/reverse';
 
 export type ReverseGeocodeState =
   | { status: 'idle'; address: null; error: null }
@@ -41,11 +40,9 @@ export function useReverseGeocode() {
     setState({ status: 'loading', address: null, error: null });
 
     try {
-      const { easting, northing } = latLonToLuref(position.lat, position.lon);
-
       const url = new URL(REVERSE_GEOCODE_URL);
-      url.searchParams.set('easting', String(easting));
-      url.searchParams.set('northing', String(northing));
+      url.searchParams.set('lat', String(position.lat));
+      url.searchParams.set('lon', String(position.lon));
 
       const res = await fetch(url.toString(), { signal: controller.signal });
 
@@ -54,11 +51,16 @@ export function useReverseGeocode() {
       }
 
       const data = (await res.json()) as {
+        count?: number;
         results?: Array<{
-          easting: number;
-          northing: number;
-          name?: string;
+          number?: string;
+          street?: string;
+          postal_code?: string;
+          locality?: string;
           distance?: number;
+          geom?: {
+            coordinates?: [number, number];
+          };
         }>;
       };
 
@@ -67,13 +69,20 @@ export function useReverseGeocode() {
         throw new Error('No results returned for this position');
       }
 
+      const label = [
+        [first.number, first.street].filter(Boolean).join(' ').trim(),
+        [first.postal_code, first.locality].filter(Boolean).join(' ').trim(),
+      ].filter(Boolean).join(', ');
+
+      const [easting, northing] = first.geom?.coordinates ?? [0, 0];
+
       setState({
         status: 'success',
         address: {
-          label: first.name ?? '',
+          label,
           distance: first.distance ?? 0,
-          easting: first.easting,
-          northing: first.northing,
+          easting,
+          northing,
         },
         error: null,
       });

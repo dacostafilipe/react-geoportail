@@ -3,6 +3,7 @@ import React, {
   useRef,
   forwardRef,
   useImperativeHandle,
+  useState,
 } from 'react';
 import { useLuxApi } from '../hooks/useLuxApi';
 import { lurefToLatLon, latLonToLuref } from '../utils/coordinates';
@@ -10,7 +11,9 @@ import type { LatLon, MapClickHandler, MarkerMode } from '../types';
 import type { LuxMapInstance } from '../types/lux';
 
 const DEFAULT_CLICK_SOURCE_PROJECTION = 'EPSG:3857';
+const OVERLAY_PROJECTION = 'EPSG:3857';
 const WGS84_PROJECTION = 'EPSG:4326';
+const LUREF_PROJECTION = 'EPSG:2169';
 
 export interface GeoportailMapProps {
   /**
@@ -81,7 +84,7 @@ const DEFAULT_BG_LAYER = 'basemap_2015_global';
 export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>(
   function GeoportailMap(
     {
-      center = LUXEMBOURG_CITY,
+      center,
       zoom = 12,
       bgLayer = DEFAULT_BG_LAYER,
       markerMode = 'none',
@@ -98,18 +101,21 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
     const mapRef = useRef<LuxMapInstance | null>(null);
     const markerLayerRef = useRef<unknown>(null);
     const clickListenerRef = useRef<((...args: unknown[]) => void) | null>(null);
+    const [isMapReady, setIsMapReady] = useState(false);
 
     // Keep stable refs to callbacks so effects don't re-run on every render
     const onMarkerPlaceRef = useRef(onMarkerPlace);
     onMarkerPlaceRef.current = onMarkerPlace;
+    const initialCenter = resolveInitialCenter(center, markerMode, markerPosition);
 
     // ------------------------------------------------------------------ map init
     useEffect(() => {
       if (luxApi.status !== 'ready') return;
       if (!mapContainerRef.current) return;
 
+      let cancelled = false;
       const lux = luxApi.lux;
-      const { easting, northing } = latLonToLuref(center.lat, center.lon);
+      const { easting, northing } = latLonToLuref(initialCenter.lat, initialCenter.lon);
 
       const mapInstance = new lux.Map({
         target: mapContainerRef.current,
@@ -122,20 +128,57 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
       });
 
       mapRef.current = mapInstance;
+      setIsMapReady(false);
+
+      const readyPromise = mapInstance.getMapReadyPromise?.() ?? Promise.resolve();
+      void readyPromise.then(() => {
+        if (!cancelled) {
+          setIsMapReady(true);
+        }
+      });
 
       return () => {
+        cancelled = true;
         // lux.Map does not expose a destroy(); we clear our references
         mapRef.current = null;
         markerLayerRef.current = null;
         clickListenerRef.current = null;
+        setIsMapReady(false);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [luxApi.status]);
 
-    // ------------------------------------------------------------------ marker
+    // ------------------------------------------------------------------ marker position
     useEffect(() => {
       const map = mapRef.current;
-      if (!map || luxApi.status !== 'ready') return;
+      if (!map || luxApi.status !== 'ready' || !isMapReady) return;
+
+      const displayPosition = resolveDisplayMarkerPosition(
+        markerMode,
+        markerPosition,
+        center ?? LUXEMBOURG_CITY
+      );
+
+      if (!displayPosition) {
+        clearMarker(markerLayerRef);
+        return;
+      }
+
+      setMarkerPosition(map, displayPosition, markerLayerRef);
+    }, [
+      isMapReady,
+      luxApi.status,
+      markerMode,
+      markerPosition?.lat,
+      markerPosition?.lon,
+      center?.lat,
+      center?.lon,
+    ]);
+
+    // ------------------------------------------------------------------ click listener
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || luxApi.status !== 'ready' || !isMapReady) return;
 
       // Remove previous click listener
       if (clickListenerRef.current) {
@@ -143,37 +186,33 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
         clickListenerRef.current = null;
       }
 
-      if (markerMode === 'none') {
-        clearMarker(map, markerLayerRef);
+      if (markerMode !== 'click') {
         return;
       }
 
-      const initialPos = markerPosition ?? (markerMode === 'fixed' ? center : undefined);
-      if (initialPos) {
-        placeMarker(map, initialPos, markerLayerRef);
-      }
+      const handler = (...args: unknown[]) => {
+        // Raw OpenLayers click coordinates are in the map view projection, not WGS84/LUREF.
+        const evt = args[0] as { coordinate?: [number, number] };
+        if (!evt.coordinate) return;
 
-      if (markerMode === 'click') {
-        const handler = (...args: unknown[]) => {
-          // Raw OpenLayers click coordinates are in the map view projection, not WGS84/LUREF.
-          const evt = args[0] as { coordinate?: [number, number] };
-          if (!evt.coordinate) return;
+        const latLon = convertMapClickCoordinateToLatLon(map, evt.coordinate);
+        setMarkerCoordinate(map, evt.coordinate, latLon, markerLayerRef);
+        onMarkerPlaceRef.current?.(latLon);
+      };
 
-          const latLon = convertMapClickCoordinateToLatLon(map, evt.coordinate);
-          placeMarker(map, latLon, markerLayerRef);
-          onMarkerPlaceRef.current?.(latLon);
-        };
+      clickListenerRef.current = handler;
+      map.on('singleclick', handler);
 
-        clickListenerRef.current = handler;
-        map.on('singleclick', handler);
-      }
+      return () => {
+        if (clickListenerRef.current) {
+          map.un('singleclick', clickListenerRef.current);
+          clickListenerRef.current = null;
+        }
+      };
     }, [
+      isMapReady,
       luxApi.status,
       markerMode,
-      markerPosition?.lat,
-      markerPosition?.lon,
-      center.lat,
-      center.lon,
     ]);
 
     // ------------------------------------------------------------------ imperative handle
@@ -183,7 +222,11 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
         const map = mapRef.current;
         if (!map) return;
         const { easting, northing } = latLonToLuref(coords.lat, coords.lon);
-        map.getView().setCenter([easting, northing]);
+        if (map.setCenter) {
+          map.setCenter([easting, northing], undefined, LUREF_PROJECTION);
+          return;
+        }
+        map.getView().setCenter(convertLatLonToMarkerCoordinate(coords));
       },
       setZoom(z: number) {
         mapRef.current?.getView().setZoom(z);
@@ -234,30 +277,54 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
 
 /**
  * Place/move an SVG pin marker on the map.
- * lux.Map is built on OpenLayers 3 — we use ol.Overlay for the marker.
+ * lux.Map is built on OpenLayers 3 — overlays must use the view projection.
  */
-function placeMarker(
+export function setMarkerPosition(
   map: LuxMapInstance,
   position: LatLon,
   layerRef: React.MutableRefObject<unknown>
 ): void {
-  // Prefer ol (OpenLayers global) if available
-  const ol = (window as unknown as { ol?: OlLike }).ol;
-  if (!ol) return;
+  const overlay = ensureMarkerOverlay(map, position, layerRef);
+  if (!overlay) return;
 
-  const { easting, northing } = latLonToLuref(position.lat, position.lon);
+  overlay.setPosition(convertLatLonToMarkerCoordinate(position));
+}
 
-  // Reuse existing overlay or create a new one
+export function setMarkerCoordinate(
+  map: LuxMapInstance,
+  coordinate: [number, number],
+  position: LatLon,
+  layerRef: React.MutableRefObject<unknown>
+): void {
+  const overlay = ensureMarkerOverlay(map, position, layerRef);
+  if (!overlay) return;
+  overlay.setPosition(coordinate);
+}
+
+export function clearMarker(
+  layerRef: React.MutableRefObject<unknown>
+): void {
+  if (!layerRef.current) return;
+  // Hide the existing overlay instead of discarding it so future updates can reuse it.
+  (layerRef.current as OlOverlay).setPosition(undefined);
+}
+
+export function ensureMarkerOverlay(
+  map: LuxMapInstance,
+  _position: LatLon,
+  layerRef: React.MutableRefObject<unknown>
+): OlOverlay | null {
   if (layerRef.current) {
-    const overlay = layerRef.current as OlOverlay;
-    overlay.setPosition([easting, northing]);
-    return;
+    return layerRef.current as OlOverlay;
   }
+
+  const ol = (window as unknown as { ol?: OlLike }).ol;
+  if (!ol) return null;
 
   const el = document.createElement('div');
   el.innerHTML = PIN_SVG;
   el.style.cssText =
-    'cursor:pointer;transform:translate(-50%,-100%);line-height:0;';
+    'cursor:pointer;line-height:0;display:block;';
 
   const overlay = new ol.Overlay({
     element: el,
@@ -265,22 +332,51 @@ function placeMarker(
     stopEvent: false,
   });
 
-  overlay.setPosition([easting, northing]);
   (map as unknown as { addOverlay(o: OlOverlay): void }).addOverlay(overlay);
   layerRef.current = overlay;
+  return overlay;
 }
 
-function clearMarker(
-  _map: LuxMapInstance,
-  layerRef: React.MutableRefObject<unknown>
-): void {
-  if (!layerRef.current) return;
+export function convertLatLonToMarkerCoordinate(
+  position: LatLon
+): [number, number] {
   const ol = (window as unknown as { ol?: OlLike }).ol;
-  if (!ol) return;
-  // Overlay doesn't have a built-in remove on the overlay itself;
-  // set position to undefined to hide it
-  (layerRef.current as OlOverlay).setPosition(undefined);
-  layerRef.current = null;
+  const transform = ol?.proj?.transform;
+
+  if (!transform) {
+    const { easting, northing } = latLonToLuref(position.lat, position.lon);
+    return [easting, northing];
+  }
+
+  return transform([position.lon, position.lat], WGS84_PROJECTION, OVERLAY_PROJECTION);
+}
+
+export function resolveDisplayMarkerPosition(
+  markerMode: MarkerMode,
+  markerPosition: LatLon | undefined,
+  center: LatLon
+): LatLon | undefined {
+  if (markerMode === 'none') {
+    return undefined;
+  }
+
+  if (markerPosition) {
+    return markerPosition;
+  }
+
+  return markerMode === 'fixed' ? center : undefined;
+}
+
+export function resolveInitialCenter(
+  center: LatLon | undefined,
+  markerMode: MarkerMode,
+  markerPosition: LatLon | undefined
+): LatLon {
+  if (markerPosition && markerMode !== 'none') {
+    return markerPosition;
+  }
+
+  return center ?? LUXEMBOURG_CITY;
 }
 
 // Minimal pin SVG (red teardrop, 30×40)
@@ -306,12 +402,8 @@ interface OlLike {
   Overlay: new (opts: { element: HTMLElement; positioning: string; stopEvent: boolean }) => OlOverlay;
 }
 
-interface LuxMapViewWithProjection {
-  getProjection?(): { getCode?(): string } | undefined;
-}
-
 export function convertMapClickCoordinateToLatLon(
-  map: LuxMapInstance,
+  _map: LuxMapInstance,
   coordinate: [number, number]
 ): LatLon {
   const ol = (window as unknown as { ol?: OlLike }).ol;
@@ -322,10 +414,6 @@ export function convertMapClickCoordinateToLatLon(
     return lurefToLatLon(easting, northing);
   }
 
-  const sourceProjection =
-    (map.getView() as LuxMapViewWithProjection).getProjection?.()?.getCode?.() ??
-    DEFAULT_CLICK_SOURCE_PROJECTION;
-
-  const [lon, lat] = transform(coordinate, sourceProjection, WGS84_PROJECTION);
+  const [lon, lat] = transform(coordinate, DEFAULT_CLICK_SOURCE_PROJECTION, WGS84_PROJECTION);
   return { lat, lon };
 }

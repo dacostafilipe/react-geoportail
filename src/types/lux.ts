@@ -64,8 +64,24 @@ export interface LuxMapInstance {
   getTarget(): HTMLElement;
   getLayers(): unknown;
   addLayerToMap(layerId: number | string, opacity?: number, visible?: boolean): void;
+  addOverlay?(overlay: unknown): void;
+  getMapReadyPromise?(): Promise<unknown>;
   on(event: string, handler: (...args: unknown[]) => void): void;
   un(event: string, handler: (...args: unknown[]) => void): void;
+  setCenter?(coordinate: [number, number], zoom?: number, positionSrs?: string | number): void;
+  showMarker?(options?: {
+    id?: number | string;
+    position?: [number, number];
+    positionSrs?: string | number;
+    autoCenter?: boolean;
+    iconURL?: string;
+    positioning?: string;
+    html?: string;
+    click?: boolean;
+    noPopupOnTransparency?: boolean;
+    target?: string | Element;
+    onClick?: (...args: unknown[]) => void;
+  }): unknown;
   getView(): {
     getCenter(): [number, number];
     getZoom(): number;
