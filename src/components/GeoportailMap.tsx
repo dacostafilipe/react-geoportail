@@ -9,6 +9,9 @@ import { lurefToLatLon, latLonToLuref } from '../utils/coordinates';
 import type { LatLon, MapClickHandler, MarkerMode } from '../types';
 import type { LuxMapInstance } from '../types/lux';
 
+const DEFAULT_CLICK_SOURCE_PROJECTION = 'EPSG:3857';
+const WGS84_PROJECTION = 'EPSG:4326';
+
 export interface GeoportailMapProps {
   /**
    * Initial center of the map.
@@ -152,12 +155,11 @@ export const GeoportailMap = forwardRef<GeoportailMapHandle, GeoportailMapProps>
 
       if (markerMode === 'click') {
         const handler = (...args: unknown[]) => {
-          // OpenLayers MapBrowserEvent — coordinate is in map projection (EPSG:2169)
+          // Raw OpenLayers click coordinates are in the map view projection, not WGS84/LUREF.
           const evt = args[0] as { coordinate?: [number, number] };
           if (!evt.coordinate) return;
 
-          const [e, n] = evt.coordinate;
-          const latLon = lurefToLatLon(e, n);
+          const latLon = convertMapClickCoordinateToLatLon(map, evt.coordinate);
           placeMarker(map, latLon, markerLayerRef);
           onMarkerPlaceRef.current?.(latLon);
         };
@@ -294,5 +296,36 @@ interface OlOverlay {
 }
 
 interface OlLike {
+  proj?: {
+    transform(
+      coordinate: [number, number],
+      source: string,
+      destination: string
+    ): [number, number];
+  };
   Overlay: new (opts: { element: HTMLElement; positioning: string; stopEvent: boolean }) => OlOverlay;
+}
+
+interface LuxMapViewWithProjection {
+  getProjection?(): { getCode?(): string } | undefined;
+}
+
+export function convertMapClickCoordinateToLatLon(
+  map: LuxMapInstance,
+  coordinate: [number, number]
+): LatLon {
+  const ol = (window as unknown as { ol?: OlLike }).ol;
+  const transform = ol?.proj?.transform;
+
+  if (!transform) {
+    const [easting, northing] = coordinate;
+    return lurefToLatLon(easting, northing);
+  }
+
+  const sourceProjection =
+    (map.getView() as LuxMapViewWithProjection).getProjection?.()?.getCode?.() ??
+    DEFAULT_CLICK_SOURCE_PROJECTION;
+
+  const [lon, lat] = transform(coordinate, sourceProjection, WGS84_PROJECTION);
+  return { lat, lon };
 }
