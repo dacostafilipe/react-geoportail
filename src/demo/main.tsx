@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { GeoportailMap } from '../components/GeoportailMap.tsx';
-import { useReverseGeocode } from '../hooks/useReverseGeocode.ts';
-import { useGeocode } from '../hooks/useGeocode.ts';
-import type { LatLon } from '../types/index.ts';
-import type { GeoportailMapHandle } from '../components/GeoportailMap.tsx';
+import { GeoportailMap } from '../components/GeoportailMap';
+import { useReverseGeocode } from '../hooks/useReverseGeocode';
+import { useGeocode } from '../hooks/useGeocode';
+import type { LatLon } from '../types';
+import type { GeoportailMapHandle } from '../components/GeoportailMap';
 
 function App() {
   const mapRef = useRef<GeoportailMapHandle>(null);

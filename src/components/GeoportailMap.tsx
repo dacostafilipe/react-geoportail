@@ -4,10 +4,10 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { useLuxApi } from '../hooks/useLuxApi.ts';
-import { lurefToLatLon, latLonToLuref } from '../utils/coordinates.ts';
-import type { LatLon, MapClickHandler, MarkerMode } from '../types/index.ts';
-import type { LuxMapInstance } from '../types/lux.d.ts';
+import { useLuxApi } from '../hooks/useLuxApi';
+import { lurefToLatLon, latLonToLuref } from '../utils/coordinates';
+import type { LatLon, MapClickHandler, MarkerMode } from '../types';
+import type { LuxMapInstance } from '../types/lux';
 
 export interface GeoportailMapProps {
   /**

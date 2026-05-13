@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { latLonToLuref } from '../utils/coordinates.ts';
-import type { LatLon, Address } from '../types/index.ts';
+import { latLonToLuref } from '../utils/coordinates';
+import type { LatLon, Address } from '../types';
 
 const REVERSE_GEOCODE_URL = 'https://api.geoportail.lu/geocoder/reverseGeocode';
 

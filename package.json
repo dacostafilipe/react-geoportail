@@ -1,6 +1,6 @@
 {
   "name": "@dacostafilipe/react-geoportail",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "React SDK for the Geoportail Luxembourg v3 API",
   "type": "module",
   "main": "./dist/react-geoportail.umd.cjs",
@@ -19,6 +19,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "prepack": "npm run build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },

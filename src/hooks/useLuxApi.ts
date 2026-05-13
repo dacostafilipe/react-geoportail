@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { loadLuxApi } from '../utils/loader.ts';
-import type { LuxNamespace } from '../types/lux.d.ts';
+import { loadLuxApi } from '../utils/loader';
+import type { LuxNamespace } from '../types/lux';
 
 export type LuxApiState =
   | { status: 'loading'; lux: null; error: null }

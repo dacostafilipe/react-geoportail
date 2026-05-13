@@ -9,7 +9,7 @@ export type {
   LuxMapInstance,
   LuxGeocoderInstance,
   LuxNamespace,
-} from './lux.d.ts';
+} from './lux';
 
 /** WGS84 lat/lon coordinate */
 export interface LatLon {

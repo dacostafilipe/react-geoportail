@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { lurefToLatLon } from '../utils/coordinates.ts';
-import type { GeocodeQuery, LatLon } from '../types/index.ts';
+import { lurefToLatLon } from '../utils/coordinates';
+import type { GeocodeQuery, LatLon } from '../types';
 
 const GEOCODE_URL = 'https://apiv3.geoportail.lu/geocode/search';
 
