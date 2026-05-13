@@ -10,7 +10,7 @@ An unofficial React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geo
 - **`useReverseGeocode`** — look up a Luxembourg address from lat/lon coordinates
 - **`useGeocode`** — search for coordinates from an address string
 - Coordinate conversion utilities (EPSG:2169 ↔ WGS84) included
-- Zero runtime npm dependencies — uses the official `apiv3loader.js` script
+- Zero runtime npm dependencies — loads the required hosted Geoportail assets directly
 
 ## Requirements
 
@@ -24,7 +24,11 @@ An unofficial React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geo
 npm install @dacostafilipe/react-geoportail
 ```
 
-The Geoportail API script (`apiv3.geoportail.lu/apiv3loader.js`) is injected automatically — no manual `<script>` tag needed.
+No manual `<script>` or `<link>` tags are needed. The package loads the required Geoportail assets directly at runtime:
+
+- `https://apiv3.geoportail.lu/static-ngeo/build/apiv3.css`
+- `https://apiv3.geoportail.lu/static-ngeo/build/vendor.js`
+- `https://apiv3.geoportail.lu/static-ngeo/build/apiv3.js`
 
 ## Quick start
 

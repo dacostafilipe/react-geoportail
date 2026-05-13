@@ -8,8 +8,8 @@ export type LuxApiState =
   | { status: 'error'; lux: null; error: Error };
 
 /**
- * Loads the Geoportail apiv3 script and returns the `lux` namespace once ready.
- * Deduplicates the script load — safe to call from multiple components.
+ * Loads the Geoportail runtime assets and returns the `lux` namespace once ready.
+ * Deduplicates the asset load — safe to call from multiple components.
  */
 export function useLuxApi(): LuxApiState {
   const [state, setState] = useState<LuxApiState>({

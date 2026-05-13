@@ -1,6 +1,6 @@
 /**
  * TypeScript declarations for the Geoportail Luxembourg lux API (v3).
- * Loaded dynamically via //apiv3.geoportail.lu/apiv3loader.js
+ * Loaded dynamically via the hosted Geoportail CSS and JS bundles.
  */
 
 export interface LuxCoordinate {
@@ -92,10 +92,12 @@ export interface LuxGeocoderInstance {
   ): void;
 }
 
-/** Global lux namespace injected by apiv3loader.js */
+/** Global lux namespace injected by the hosted Geoportail bundles. */
 export interface LuxNamespace {
   Map: new (options: LuxMapOptions) => LuxMapInstance;
   Geocoder: new () => LuxGeocoderInstance;
+  setBaseUrl(baseUrl: string, protocol: string): void;
+  setI18nUrl(url: string): void;
 }
 
 declare global {
