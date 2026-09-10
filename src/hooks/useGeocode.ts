@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { lurefToLatLon } from '../utils/coordinates';
 import type { GeocodeQuery, LatLon } from '../types';
 
-const GEOCODE_URL = 'https://apiv3.geoportail.lu/geocode/search';
+const GEOCODE_URL = 'https://apiv4.geoportail.lu/geocode/search';
 
 export interface GeocodeResultItem {
   latLon: LatLon;
@@ -74,7 +74,7 @@ export function useGeocode() {
           accuracy?: number;
           AddressDetails?: {
             street?: string;
-            number?: string;
+            postnumber?: string;
             zip?: string;
             locality?: string;
           };
@@ -87,7 +87,7 @@ export function useGeocode() {
         northing: r.northing,
         accuracy: r.accuracy ?? 0,
         street: r.AddressDetails?.street,
-        num: r.AddressDetails?.number,
+        num: r.AddressDetails?.postnumber,
         zip: r.AddressDetails?.zip,
         locality: r.AddressDetails?.locality,
       }));

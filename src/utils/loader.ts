@@ -1,18 +1,35 @@
 /**
- * Dynamically injects the Geoportail v3 assets and resolves when
+ * Dynamically injects the Geoportail v4 assets and resolves when
  * the global `lux` namespace is available.
+ *
+ * This mirrors what the official `https://apiv4.geoportail.lu/apiv4loader.js`
+ * does, except that the official loader relies on `document.write` and can
+ * therefore only be used from a synchronous `<script>` tag in the page head.
  */
 
-const LUX_BASE_URL = 'https://apiv3.geoportail.lu/';
+const LUX_BASE_URL = 'https://apiv4.geoportail.lu/';
 const LUX_PROTOCOL = 'https';
-const LUX_I18N_URL = 'https://apiv3.geoportail.lu/static-ngeo/build/fr.json';
-const LUX_STYLESHEET_URL = 'https://apiv3.geoportail.lu/static-ngeo/build/apiv3.css';
-const LUX_VENDOR_URL = 'https://apiv3.geoportail.lu/static-ngeo/build/vendor.js';
-const LUX_API_URL = 'https://apiv3.geoportail.lu/static-ngeo/build/apiv3.js';
+const LUX_I18N_URL = 'https://apiv4.geoportail.lu/static-ngeo/build/fr.json';
+const LUX_STYLESHEET_URL = 'https://apiv4.geoportail.lu/static-ngeo/build/apiv4.css';
+const LUX_OL_URL = 'https://apiv4.geoportail.lu/static-ngeo/build/ol.js';
+const LUX_PROJ4_URL = 'https://apiv4.geoportail.lu/static-ngeo/build/proj4.js';
+const LUX_AUTOCOMPLETE_URL =
+  'https://apiv4.geoportail.lu/static-ngeo/build/auto-complete.min.js';
+const LUX_API_URL = 'https://apiv4.geoportail.lu/static-ngeo/build/apiv4.js';
 
-const LUX_STYLESHEET_ID = 'geoportail-apiv3-css';
-const LUX_VENDOR_SCRIPT_ID = 'geoportail-apiv3-vendor';
-const LUX_API_SCRIPT_ID = 'geoportail-apiv3-script';
+const LUX_STYLESHEET_ID = 'geoportail-apiv4-css';
+const LUX_OL_SCRIPT_ID = 'geoportail-apiv4-ol';
+const LUX_PROJ4_SCRIPT_ID = 'geoportail-apiv4-proj4';
+const LUX_AUTOCOMPLETE_SCRIPT_ID = 'geoportail-apiv4-autocomplete';
+const LUX_API_SCRIPT_ID = 'geoportail-apiv4-script';
+
+/** LUREF (EPSG:2169) definition, as registered by the official v4 loader. */
+const LUREF_PROJECTION_CODE = 'EPSG:2169';
+const LUREF_PROJ4_DEF =
+  '+proj=tmerc +lat_0=49.83333333333334 +lon_0=6.166666666666667 +k=1 ' +
+  '+x_0=80000 +y_0=100000 +ellps=intl ' +
+  '+towgs84=-189.681,18.3463,-42.7695,-0.33746,-3.09264,2.53861,0.4598 ' +
+  '+units=m +no_defs';
 
 const ELEMENT_STATUS_ATTRIBUTE = 'data-geoportail-status';
 
@@ -68,10 +85,32 @@ async function loadLuxApiInternal(): Promise<void> {
   }
 
   await loadStylesheetOnce(LUX_STYLESHEET_ID, LUX_STYLESHEET_URL);
-  await loadScriptOnce(LUX_VENDOR_SCRIPT_ID, LUX_VENDOR_URL);
+  await loadScriptOnce(LUX_OL_SCRIPT_ID, LUX_OL_URL);
+  await loadScriptOnce(LUX_PROJ4_SCRIPT_ID, LUX_PROJ4_URL);
+  registerLurefProjection();
+  await loadScriptOnce(LUX_AUTOCOMPLETE_SCRIPT_ID, LUX_AUTOCOMPLETE_URL);
   await loadScriptOnce(LUX_API_SCRIPT_ID, LUX_API_URL);
   await waitForLux();
   configureLux(window.lux!);
+}
+
+/**
+ * The v4 bundle expects `ol` and `proj4` as globals and does not register
+ * LUREF itself — the official loader does it between loading proj4 and the
+ * API bundle, so we do the same. Without it the map cannot handle the
+ * EPSG:2169 positions the API works with.
+ */
+function registerLurefProjection(): void {
+  const proj4 = window.proj4;
+  const ol = window.ol;
+
+  if (!proj4 || !ol?.proj?.proj4?.register) return;
+
+  if (!proj4.defs(LUREF_PROJECTION_CODE)) {
+    proj4.defs(LUREF_PROJECTION_CODE, LUREF_PROJ4_DEF);
+  }
+
+  ol.proj.proj4.register(proj4);
 }
 
 function waitForLux(): Promise<void> {
