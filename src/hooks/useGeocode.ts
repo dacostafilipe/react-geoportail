@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { lurefToLatLon } from '../utils/coordinates';
 import type { GeocodeQuery, LatLon } from '../types';
 
-const GEOCODE_URL = 'https://apiv3.geoportail.lu/geocode/search';
+const GEOCODE_URL = 'https://apiv4.geoportail.lu/geocode/search';
 
 export interface GeocodeResultItem {
   latLon: LatLon;
@@ -13,6 +13,24 @@ export interface GeocodeResultItem {
   num?: string;
   zip?: string;
   locality?: string;
+}
+
+/**
+ * The API returns WGS84 coordinates as a `geomlonlat` GeoJSON point (in
+ * [lon, lat] order) computed server-side, which is more accurate than the
+ * bundled LUREF conversion. Fall back to the local conversion if a result
+ * comes back without it.
+ */
+function toLatLon(
+  coordinates: [number, number] | undefined,
+  easting: number,
+  northing: number
+): LatLon {
+  if (coordinates) {
+    const [lon, lat] = coordinates;
+    return { lat, lon };
+  }
+  return lurefToLatLon(easting, northing);
 }
 
 export type GeocodeState =
@@ -72,9 +90,12 @@ export function useGeocode() {
           easting: number;
           northing: number;
           accuracy?: number;
+          geomlonlat?: {
+            coordinates?: [number, number];
+          };
           AddressDetails?: {
             street?: string;
-            number?: string;
+            postnumber?: string;
             zip?: string;
             locality?: string;
           };
@@ -82,12 +103,12 @@ export function useGeocode() {
       };
 
       const results: GeocodeResultItem[] = (data.results ?? []).map((r) => ({
-        latLon: lurefToLatLon(r.easting, r.northing),
+        latLon: toLatLon(r.geomlonlat?.coordinates, r.easting, r.northing),
         easting: r.easting,
         northing: r.northing,
         accuracy: r.accuracy ?? 0,
         street: r.AddressDetails?.street,
-        num: r.AddressDetails?.number,
+        num: r.AddressDetails?.postnumber,
         zip: r.AddressDetails?.zip,
         locality: r.AddressDetails?.locality,
       }));

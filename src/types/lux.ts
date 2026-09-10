@@ -1,5 +1,5 @@
 /**
- * TypeScript declarations for the Geoportail Luxembourg lux API (v3).
+ * TypeScript declarations for the Geoportail Luxembourg lux API (v4).
  * Loaded dynamically via the hosted Geoportail CSS and JS bundles.
  */
 
@@ -116,8 +116,25 @@ export interface LuxNamespace {
   setI18nUrl(url: string): void;
 }
 
+/** Minimal shape of the proj4 global shipped alongside the v4 bundle. */
+export interface Proj4Namespace {
+  defs(name: string): unknown;
+  defs(name: string, projection: string): void;
+}
+
+/** Minimal shape of the OpenLayers global shipped alongside the v4 bundle. */
+export interface OlNamespace {
+  proj?: {
+    proj4?: {
+      register(proj4: Proj4Namespace): void;
+    };
+  };
+}
+
 declare global {
   interface Window {
     lux?: LuxNamespace;
+    proj4?: Proj4Namespace;
+    ol?: OlNamespace;
   }
 }

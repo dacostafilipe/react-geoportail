@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { LatLon, Address } from '../types';
 
-const REVERSE_GEOCODE_URL = 'https://apiv3.geoportail.lu/geocode/reverse';
+const REVERSE_GEOCODE_URL = 'https://apiv4.geoportail.lu/geocode/reverse';
 
 export type ReverseGeocodeState =
   | { status: 'idle'; address: null; error: null }
@@ -12,7 +12,9 @@ export type ReverseGeocodeState =
 /**
  * Hook for reverse geocoding: convert a WGS84 lat/lon to a Luxembourg address.
  *
- * Uses the Geoportail REST reverse geocode endpoint — no API key required.
+ * Uses the Geoportail v4 REST reverse geocode endpoint — no API key required.
+ * The endpoint accepts either `lat`/`lon` (WGS84) or `easting`/`northing`
+ * (LUREF); we send WGS84 so no client-side reprojection is needed.
  *
  * @example
  * const { state, lookup } = useReverseGeocode();

@@ -1,8 +1,8 @@
 # react-geoportail
 
-> **Disclaimer:** This is an **unofficial, community-built** React package. It is not affiliated with, endorsed by, or supported by the [Geoportail Luxembourg](https://www.geoportail.lu) team or the Administration du Cadastre et de la Topographie (ACT). For the official API, see [apiv3.geoportail.lu](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/).
+> **Disclaimer:** This is an **unofficial, community-built** React package. It is not affiliated with, endorsed by, or supported by the [Geoportail Luxembourg](https://www.geoportail.lu) team or the Administration du Cadastre et de la Topographie (ACT). For the official API, see [apiv4.geoportail.lu](https://apiv4.geoportail.lu/proj/1.0/build/apidoc/).
 
-An unofficial React SDK for the [Geoportail Luxembourg v3 API](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/). Provides a map component and hooks for geocoding, all typed with TypeScript.
+An unofficial React SDK for the [Geoportail Luxembourg v4 API](https://apiv4.geoportail.lu/proj/1.0/build/apidoc/). Provides a map component and hooks for geocoding, all typed with TypeScript.
 
 ## Features
 
@@ -26,9 +26,16 @@ npm install @dacostafilipe/react-geoportail
 
 No manual `<script>` or `<link>` tags are needed. The package loads the required Geoportail assets directly at runtime:
 
-- `https://apiv3.geoportail.lu/static-ngeo/build/apiv3.css`
-- `https://apiv3.geoportail.lu/static-ngeo/build/vendor.js`
-- `https://apiv3.geoportail.lu/static-ngeo/build/apiv3.js`
+- `https://apiv4.geoportail.lu/static-ngeo/build/apiv4.css`
+- `https://apiv4.geoportail.lu/static-ngeo/build/ol.js`
+- `https://apiv4.geoportail.lu/static-ngeo/build/proj4.js`
+- `https://apiv4.geoportail.lu/static-ngeo/build/auto-complete.min.js`
+- `https://apiv4.geoportail.lu/static-ngeo/build/apiv4.js`
+
+These are the same assets the official `apiv4loader.js` pulls in — that loader
+uses `document.write`, so it cannot be injected at runtime and the package
+loads the assets itself instead (including the LUREF/EPSG:2169 projection
+registration the loader performs).
 
 ## Quick start
 
@@ -214,7 +221,7 @@ search({ num: '1', street: 'rue du Fort Thüngen', zip: '1499', locality: 'Luxem
 
 ```ts
 interface GeocodeResultItem {
-  latLon: LatLon;   // WGS84 { lat, lon }
+  latLon: LatLon;   // WGS84 { lat, lon }, as returned by the API
   easting: number;  // EPSG:2169
   northing: number; // EPSG:2169
   accuracy: number;
@@ -267,9 +274,9 @@ The demo app (`src/demo/main.tsx`) shows all three features together: map with c
 
 ## API reference
 
-- [Geoportail Luxembourg API v3 JSDoc](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/)
+- [Geoportail Luxembourg API v4 JSDoc](https://apiv4.geoportail.lu/proj/1.0/build/apidoc/)
 - [REST API wiki](https://wiki.geoportail.lu/doku.php?id=en:api:rest)
-- [Official API examples](https://apiv3.geoportail.lu/proj/1.0/build/apidoc/examples/)
+- [Official API examples](https://apiv4.geoportail.lu/proj/1.0/build/apidoc/examples/)
 
 ## License
 
