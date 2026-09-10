@@ -221,7 +221,7 @@ search({ num: '1', street: 'rue du Fort Thüngen', zip: '1499', locality: 'Luxem
 
 ```ts
 interface GeocodeResultItem {
-  latLon: LatLon;   // WGS84 { lat, lon }
+  latLon: LatLon;   // WGS84 { lat, lon }, as returned by the API
   easting: number;  // EPSG:2169
   northing: number; // EPSG:2169
   accuracy: number;
